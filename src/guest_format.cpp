@@ -43,8 +43,24 @@ std::string guest_format(Env& e, ArgSource& args, const std::string& fmt) {
     // decides how much to consume rather than how to print.
     const std::size_t start = i++;
     std::string head;                        // everything before the length
-    while (i < fmt.size() && std::strchr("-+ #0123456789.*", fmt[i]))
+    int stars = 0;                           // width or precision from an
+    while (i < fmt.size() && std::strchr("-+ #0123456789.*", fmt[i])) {
+      if (fmt[i] == '*') ++stars;            // argument, not from the format
       head.push_back(fmt[i++]);
+    }
+    // "%*d" and "%.*f" take the width, or the precision, as an argument of
+    // their own, ahead of the value. Collecting the star into the spec and
+    // not consuming that argument leaves the host printf reading the value as
+    // a width and everything after it one place out of step - the same shape
+    // of fault that made a long long print as an address.
+    std::string sized = head;
+    for (int star = 0; star < stars; ++star) {
+      const int n = static_cast<int>(args.next32());
+      const std::size_t at = sized.find('*');
+      if (at == std::string::npos) break;
+      sized = sized.substr(0, at) + std::to_string(n) + sized.substr(at + 1);
+    }
+    head = sized;
     std::string length;
     while (i < fmt.size() && std::strchr("hlLqjzt", fmt[i]))
       length.push_back(fmt[i++]);
