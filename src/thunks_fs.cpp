@@ -375,6 +375,56 @@ void t_mkdir(Env& e) {
   e.ret(0);
 }
 
+// remove and rename, which are how a save gets its name.
+//
+// Saving in Warband is not one write. The engine builds the whole file under
+// a temporary name, verifies its checksum, and only then commits it:
+//
+//     write   Savegames/Native/new_game.sav
+//     rename  sg00.sav -> last_savegame_backup.sav
+//     rename  new_game.sav -> sg00.sav
+//
+// Both of these were answered with "success, did nothing", so every save was
+// written correctly and then never given the name the load screen looks for.
+// The engine said "Savegame succeded..." and meant it - the rename it asked
+// for reported success - and Load Game listed nothing, because sg00.sav had
+// never existed.
+//
+// Both paths map into the writable tree. That is not only where saves live,
+// it is the guard: an engine that asked to delete something would otherwise
+// be asking to delete the extracted game data, and there is no reason to
+// give it that.
+void t_remove(Env& e) {
+  Env::Args a(e);
+  const std::string guest = e.mem().str(a.next32());
+  const std::string host = to_host(guest, true);
+  const int rc = std::remove(host.c_str());
+  static int shown = 0;
+  if (++shown <= 8)
+    std::printf("[fs  ] remove %s -> %s%s\n", guest.c_str(), host.c_str(),
+                rc == 0 ? "" : " (not there)");
+  e.ret(rc == 0 ? 0u : 0xFFFFFFFFu);
+}
+
+void t_rename(Env& e) {
+  Env::Args a(e);
+  const std::string from_guest = e.mem().str(a.next32());
+  const std::string to_guest = e.mem().str(a.next32());
+  const std::string from = to_host(from_guest, true);
+  const std::string to = to_host(to_guest, true);
+
+  // POSIX rename replaces the destination; Windows refuses if it exists, and
+  // this has to behave the same on both or a save would commit on one and not
+  // the other.
+  std::remove(to.c_str());
+  const int rc = std::rename(from.c_str(), to.c_str());
+  static int shown = 0;
+  if (++shown <= 8)
+    std::printf("[fs  ] rename %s -> %s%s\n", from.c_str(), to.c_str(),
+                rc == 0 ? "" : " FAILED");
+  e.ret(rc == 0 ? 0u : 0xFFFFFFFFu);
+}
+
 void t_ok(Env& e) { e.ret(0); }
 void t_minus_one(Env& e) { e.ret(0xFFFFFFFF); }
 
@@ -647,8 +697,8 @@ const ThunkEntry kFsTable[] = {
     {"mkdir", &t_mkdir},
     {"fcntl", &t_ok},
     {"ioctl", &t_minus_one},
-    {"remove", &t_ok},
-    {"rename", &t_ok},
+    {"remove", &t_remove},
+    {"rename", &t_rename},
     {"getenv", &t_getenv},
     {"geteuid", &t_geteuid},
     {"realpath", &t_realpath},
