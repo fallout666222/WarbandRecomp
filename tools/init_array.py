@@ -8,10 +8,15 @@
 #   python tools/init_array.py                 # list them all, in order
 #   python tools/init_array.py 0x1234 0x5678   # runtime addr, runtime addr of
 #                                              # open_the_log_first -> name
+import os
 import struct
 import sys
 
-ELF = r"H:\dwnld\wb_switch\warband_nx.elf"
+# The Switch build's .elf, where the build script puts it.
+ELF = os.environ.get(
+    "WB_SWITCH_ELF",
+    os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                 os.pardir, "build_switch", "warband_nx.elf"))
 
 
 def sections(data):

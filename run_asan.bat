@@ -14,24 +14,24 @@ REM block names the function and the line.
 
 setlocal
 
-if not defined WB_ASAN_BUILD set "WB_ASAN_BUILD=H:\dwnld\wb_asan"
+if not defined WB_ASAN_BUILD set "WB_ASAN_BUILD=%~dp0build_asan"
 set "EXE=%WB_ASAN_BUILD%\warband_nx.exe"
-if not defined WB_SO set "WB_SO=%~dp0..\apk_lib\libMBExpMobile.so"
+if not defined WB_SO set "WB_SO=%~dp0game\libMBExpMobile.so"
 set "SO=%WB_SO%"
-if not defined WB_DATA set "WB_DATA=%~dp0../gamedata"
+if not defined WB_DATA set "WB_DATA=%~dp0game/gamedata"
 set "DATA=%WB_DATA%"
-if not defined WB_SAVE set "WB_SAVE=%~dp0../usersave"
+if not defined WB_SAVE set "WB_SAVE=%~dp0game/saves"
 set "SAVE=%WB_SAVE%"
 set "LOG=%WB_ASAN_BUILD%\asan.log"
 
 if not exist "%EXE%" (
   echo Not built. Configure and build it with:
-  echo   cmake -B H:\dwnld\wb_asan -S . -DWB_ASAN=ON ...
+  echo   cmake -B "%WB_ASAN_BUILD%" -S . -DWB_ASAN=ON ...
   pause
   exit /b 1
 )
 
-echo Logging to %LOG%
+echo Logging to "%LOG%"
 echo Play until it dies - the tutorial is what does it.
 echo.
 

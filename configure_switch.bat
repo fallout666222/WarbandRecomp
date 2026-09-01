@@ -47,15 +47,15 @@ if not exist "%BASH%" (
   echo Could not find %BASH%
   echo Install devkitPro with the switch-dev group, then switch-mesa and
   echo switch-libdrm_nouveau, and cmake and ninja into its MSYS2:
-  echo   %DKP_WIN%\msys2\usr\bin\pacman.exe -S cmake ninja
+  echo   "%DKP_WIN%\msys2\usr\bin\pacman.exe" -S cmake ninja
   exit /b 1
 )
 
 set "SRC=%~dp0"
 if "%SRC:~-1%"=="\" set "SRC=%SRC:~0,-1%"
-if not defined WB_SWITCH_BUILD set "WB_SWITCH_BUILD=H:\dwnld\wb_switch"
-if not defined WB_DYNARMIC set "WB_DYNARMIC=H:\dwnld\dynarmic"
-if not defined WB_BOOST set "WB_BOOST=H:\dwnld\boost_1_87_0"
+if not defined WB_SWITCH_BUILD set "WB_SWITCH_BUILD=%~dp0build_switch"
+if not defined WB_DYNARMIC set "WB_DYNARMIC=%~dp0external\dynarmic"
+if not defined WB_BOOST set "WB_BOOST=%~dp0external\boost"
 
 REM Horizon hands out code memory as two aliases - one writable, one
 REM executable, at different addresses - and dynarmic assumes one. oaknut's
@@ -80,6 +80,6 @@ REM CMake 4 refuses outright.
 if errorlevel 1 exit /b 1
 
 echo.
-echo Configured in %WB_SWITCH_BUILD%. Build with:
+echo Configured in "%WB_SWITCH_BUILD%". Build with:
 echo   build_switch.bat
 endlocal

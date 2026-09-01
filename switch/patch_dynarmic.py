@@ -28,7 +28,9 @@ import io
 import os
 import sys
 
-DEFAULT = r"H:\dwnld\dynarmic"
+# Beside this script, which is where setup.bat puts it.
+DEFAULT = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                       os.pardir, "external", "dynarmic")
 
 # oaknut's own CodeBlock has one view, so it gains the two names dynarmic will
 # now ask for. Our Switch build replaces this header entirely - see

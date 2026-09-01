@@ -13,13 +13,13 @@ REM for one run that answers the question, not for playing.
 
 setlocal
 
-if not defined WB_BUILD set "WB_BUILD=H:\dwnld\wb_build"
+if not defined WB_BUILD set "WB_BUILD=%~dp0build"
 set "EXE=%WB_BUILD%\warband_nx.exe"
-if not defined WB_SO set "WB_SO=%~dp0..\apk_lib\libMBExpMobile.so"
+if not defined WB_SO set "WB_SO=%~dp0game\libMBExpMobile.so"
 set "SO=%WB_SO%"
-if not defined WB_DATA set "WB_DATA=%~dp0../gamedata"
+if not defined WB_DATA set "WB_DATA=%~dp0game/gamedata"
 set "DATA=%WB_DATA%"
-if not defined WB_SAVE set "WB_SAVE=%~dp0../usersave"
+if not defined WB_SAVE set "WB_SAVE=%~dp0game/saves"
 set "SAVE=%WB_SAVE%"
 set "LOG=%WB_BUILD%\trace.log"
 
@@ -29,7 +29,7 @@ if not exist "%EXE%" (
   exit /b 1
 )
 
-echo Logging to %LOG%
+echo Logging to "%LOG%"
 echo.
 echo Import logging starts 30 seconds in, so most of the loading is in the
 echo log too. Expect it to be large and loading to be slower than usual.
@@ -41,7 +41,7 @@ echo.
 
 echo.
 echo ---- the last 25 lines ----
-powershell -NoProfile -Command "Get-Content -Path '%LOG%' -Tail 25"
+powershell -NoProfile -Command "Get-Content -LiteralPath '%LOG%' -Tail 25"
 echo ---------------------------
 echo.
 echo The last [call] line names the last import the engine made.

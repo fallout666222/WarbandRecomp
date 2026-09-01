@@ -20,13 +20,13 @@ REM everything goes to a file, and the tail is shown afterwards either way.
 
 setlocal
 
-if not defined WB_BUILD set "WB_BUILD=H:\dwnld\wb_build"
+if not defined WB_BUILD set "WB_BUILD=%~dp0build"
 set "EXE=%WB_BUILD%\warband_nx.exe"
-if not defined WB_SO set "WB_SO=%~dp0..\apk_lib\libMBExpMobile.so"
+if not defined WB_SO set "WB_SO=%~dp0game\libMBExpMobile.so"
 set "SO=%WB_SO%"
-if not defined WB_DATA set "WB_DATA=%~dp0../gamedata"
+if not defined WB_DATA set "WB_DATA=%~dp0game/gamedata"
 set "DATA=%WB_DATA%"
-if not defined WB_SAVE set "WB_SAVE=%~dp0../usersave"
+if not defined WB_SAVE set "WB_SAVE=%~dp0game/saves"
 set "SAVE=%WB_SAVE%"
 set "LOG=%WB_BUILD%\warband.log"
 
@@ -42,7 +42,7 @@ if not exist "%SO%" (
   exit /b 1
 )
 
-echo Logging to %LOG%
+echo Logging to "%LOG%"
 echo.
 echo Wait for the menu, then Play Tutorial and Continue. Close the window
 echo when you are done.
@@ -54,12 +54,12 @@ REM rather than leaving a window nothing can close.
 "%EXE%" "%SO%" "--data=%DATA%" "--save=%SAVE%" --svcs=0 --seconds=3600 %* > "%LOG%" 2>&1
 
 echo.
-echo ---- the last 40 lines of %LOG% ----
-powershell -NoProfile -Command "Get-Content -Path '%LOG%' -Tail 40"
+echo ---- the last 40 lines of "%LOG%" ----
+powershell -NoProfile -Command "Get-Content -LiteralPath '%LOG%' -Tail 40"
 echo ------------------------------------
 echo.
 echo A crash leaves [fault] lines above; a clean shutdown leaves
-echo "[run ] process exiting". The whole log is in %LOG%.
+echo "[run ] process exiting". The whole log is in "%LOG%".
 echo.
 echo If the process vanishes with nothing in the log at all, the graphics
 echo driver killed it: look in the Windows event log, not here.

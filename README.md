@@ -35,125 +35,94 @@ Not done: an unwinder for the engine's exceptions, `qsort`, `setjmp`, and a
 long tail of polish. `NOTES.md` is the engineering log — what was found, what
 it cost, and why each piece is the shape it is.
 
-## Getting it running on a Switch
+## What you need
 
-You need custom firmware (Atmosphère) and hbmenu. You also need, from your own
-copy of the game:
+- **Windows**, with Visual Studio 2022 and the *Desktop development with C++*
+  workload. CMake and Ninja come with it.
+- **devkitPro** for the Switch build, with the `switch-dev` group, plus the GL
+  stack and CMake and Ninja inside its own MSYS2:
 
-- **`libMBExpMobile.so`** — out of the Android APK, from `lib/armeabi-v7a/`.
-  An APK is a zip; any archiver will open it.
-- **The game data** — out of the two `.obb` files that ship alongside the APK.
-  They are jobb containers, which is to say FAT images with a footer:
-
-  ```
-  python tools/jobb_extract.py main.40.com.taleworlds.mbwarband.obb  gamedata
-  python tools/jobb_extract.py patch.60.com.taleworlds.mbwarband.obb gamedata
+  ```bash
+  pacman -S switch-dev switch-mesa switch-libdrm_nouveau cmake ninja
   ```
 
-  That gives about 795 MB in `gamedata/`.
+- **git** and **Python 3** on `PATH`.
+- **Your copy of the game**: the Android APK and its two `.obb` files. The APK
+  carries the engine; the OBBs carry the data. Nothing here downloads either.
 
-Put it on the SD card like this:
+## Setup
+
+Clone this repository, drop the APK and the two `.obb` files into the folder,
+and run:
+
+```bat
+setup.bat
+```
+
+It clones dynarmic, downloads the Boost headers, takes `libMBExpMobile.so` out
+of the APK and unpacks both OBBs. Everything lands inside this folder — the
+project does not reach outside itself:
 
 ```
-/switch/warband/warband_nx.nro
-/switch/warband/libMBExpMobile.so
-/switch/warband/gamedata/          the extracted OBB tree
-/switch/warband/args.txt           optional, see below
-/switch/warband/user/              saves, created on first run
-/switch/warband/warband.log        written every run
+warband_nx/
+  external/dynarmic/     cloned by setup.bat
+  external/boost/        downloaded by setup.bat, headers only
+  game/libMBExpMobile.so out of the APK
+  game/gamedata/         the OBBs unpacked, about 795 MB
+  game/saves/            written as you play
+  build/                 the Windows build
+  build_switch/          the Switch build
+  sdcard/switch/warband/ assembled by stage_sd.bat, ready to copy
 ```
 
-**Launch it with title takeover** — in hbmenu, hold **R** while opening a
-game, then start warband_nx from the album. Not from the album applet on its
-own: applet mode caps a process at about 448 MiB and the guest address space
-alone is 2 GiB. Started the wrong way it says so in the log and stops.
+If you already have dynarmic or Boost somewhere, point at them instead and
+that step is skipped:
 
-Everything the port prints goes to `warband.log` next to the `.nro`. It is
-quiet by default — loading writes tens of thousands of lines otherwise, and on
-a console every one of them is an SD card write the game waits for.
-
-### args.txt
-
-hbmenu launches an `.nro` with no arguments, and every diagnostic in this
-build is a command-line switch, so they are read from
-`sdmc:/switch/warband/args.txt` instead — one per line, `#` starts a comment.
-`switch/args.txt.example` lists them. The two worth knowing:
-
+```bat
+set WB_DYNARMIC=C:\src\dynarmic
+set WB_BOOST=C:\src\boost
 ```
---verbose                       every log category, not just the quiet set
---shot=sdmc:/switch/warband/s   write s_01.bmp, s_02.bmp ... from the back buffer
-```
+
+Every path the build uses works the same way — `WB_BUILD`, `WB_SWITCH_BUILD`,
+`WB_DEVKITPRO`, `WB_SO`, `WB_DATA`, `WB_SAVE`, `VSROOT`. Unset, they all point
+inside this folder.
 
 ## Building
-
-Both targets build from the same source. The only files that differ are the
-platform layer — `gl_win32.cpp` against `gl_switch.cpp`, `audio_win32.cpp`
-against `audio_switch.cpp`, `gamepad_win32.cpp` against `gamepad_switch.cpp` —
-and one header of oaknut's, replaced for the Switch so JIT pages come from
-libnx.
-
-You need, for either:
-
-- **[dynarmic](https://github.com/yuzu-mirror/dynarmic)**, cloned somewhere.
-  The upstream `merryhime/dynarmic` is gone; this mirror is the same code
-  under the same 0BSD licence. No `--recursive` needed — it vendors its
-  externals.
-- **Boost headers**, 1.87 or thereabouts. Headers only, nothing to compile:
-  dynarmic wants `icl` and `variant`.
-- **Python 3**, for the OBB extractor and the dynarmic patch below.
-
-Paths come from the environment, so nothing has to live where it lives here:
-
-| variable | what it is | default |
-| --- | --- | --- |
-| `WB_DYNARMIC` | the dynarmic checkout | `H:\dwnld\dynarmic` |
-| `WB_BOOST` | the Boost headers | `H:\dwnld\boost_1_87_0` |
-| `WB_BUILD` | the Windows build tree | `H:\dwnld\wb_build` |
-| `WB_SWITCH_BUILD` | the Switch build tree | `H:\dwnld\wb_switch` |
-| `WB_DEVKITPRO` | where devkitPro is installed | found automatically |
-| `VSROOT` | Visual Studio | 2022 Community |
-
-Put the build tree somewhere without an `&` in the path. Several of the tools
-in the chain quote carelessly, and `cmd` treats it as a command separator.
-
-### Windows
-
-Visual Studio 2022 with the **Desktop development with C++** workload —
-CMake and Ninja come with it, and nothing needs to be on `PATH` beforehand.
 
 ```bat
 configure.bat
 build.bat
 ```
 
-Then `run.bat` to play it, which also keeps a log. The mouse is a finger:
-click to tap, drag to swipe. A plugged-in gamepad is read through XInput.
-Closing the window ends the run.
+`run.bat` then plays it and keeps a log. The mouse is a finger: click to tap,
+drag to swipe. A plugged-in gamepad is read through XInput. Closing the window
+ends the run.
 
-### Switch
-
-devkitPro with the **switch-dev** group, plus the GL stack and, into
-devkitPro's own MSYS2, CMake and Ninja:
-
-```bash
-pacman -S switch-dev switch-mesa switch-libdrm_nouveau cmake ninja
-```
+For the Switch:
 
 ```bat
 configure_switch.bat
 build_switch.bat
+stage_sd.bat
 ```
 
-The `.nro` lands in the build tree. Copy it to the SD card as above.
+`stage_sd.bat` assembles `sdcard\switch\warband\` — the `.nro`, the engine, the
+data and an `args.txt`. Copy the `switch` folder inside it to the root of your
+SD card.
 
-Two things about that build are worth knowing before they surprise you.
+**Launch it with title takeover** — in hbmenu, hold **R** while opening a game,
+then start warband_nx from the album. Not from the album applet on its own:
+applet mode caps a process at about 448 MiB and the guest address space alone
+is 2 GiB. Started the wrong way it says so in the log and stops.
+
+Two things about the Switch build are worth knowing before they surprise you.
 
 **It must be devkitPro's own CMake, run from devkitPro's own shell.** Its
 toolchain file refuses to run under any other CMake, and that CMake is an
-MSYS2 program which reads `H:/x` as a relative path and glues it onto its
+MSYS2 program which reads `C:/x` as a relative path and glues it onto its
 working directory. So `configure_switch.bat` translates every path with
 `cygpath` and hands the job to `bash -lc`. If you build from the MSYS2 shell
-yourself, none of that applies and the plain `cmake` invocation works.
+yourself, none of that applies and a plain `cmake` invocation works.
 
 **dynarmic needs a four-line patch**, applied for you by
 `switch/patch_dynarmic.py` when you configure. Horizon hands out JIT memory as
@@ -163,10 +132,24 @@ through, already supports the split; the patch is which pointers get passed.
 It is idempotent, and a patch rather than a fork because dynarmic is a
 checkout, not part of this tree.
 
-## When it goes wrong
+## Running it
 
-The log is the tool. On the Switch it is `warband.log` beside the `.nro`; on
-Windows `run.bat` writes one and prints its tail.
+Everything the port prints goes to a log: `warband.log` beside the `.nro` on
+the console, and inside `build\` on Windows. It is quiet by default — loading
+writes tens of thousands of lines otherwise, and on a console every one of
+them is an SD card write the game waits for.
+
+hbmenu launches an `.nro` with no arguments, and every diagnostic in this build
+is a command-line switch, so they are read from
+`sdmc:/switch/warband/args.txt` instead — one per line, `#` starts a comment.
+`switch/args.txt.example` lists them all. The two worth knowing:
+
+```
+--verbose                       every log category, not just the quiet set
+--shot=sdmc:/switch/warband/s   write s_01.bmp, s_02.bmp ... from the back buffer
+```
+
+## When it goes wrong
 
 - **A run that ends with nothing in the log** is usually the graphics driver.
   On Windows, look in the Event Viewer for a TDR before looking anywhere else
@@ -193,7 +176,7 @@ src/audio_*.cpp          the mixer, and one file per platform for the device
 src/gl_*.cpp             the GL layer, and one file per platform for the context
 src/guest_code.cpp       imports answered with ARM32 code instead of a thunk
 switch/                  the oaknut override, the dynarmic patch, args template
-tools/                   the OBB extractor, disassembly and symbol helpers
+tools/                   the OBB extractor, the guest assembler, symbol helpers
 NOTES.md                 how it works and what it cost to find out
 ```
 

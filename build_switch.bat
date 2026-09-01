@@ -22,7 +22,7 @@ REM msys2's own bin on PATH: cygpath is called unquoted below, because a
 REM quoted program path inside a for /f command line is one of the few things
 REM cmd cannot parse.
 set "PATH=%DKP_WIN%\msys2\usr\bin;%PATH%"
-if not defined WB_SWITCH_BUILD set "WB_SWITCH_BUILD=H:\dwnld\wb_switch"
+if not defined WB_SWITCH_BUILD set "WB_SWITCH_BUILD=%~dp0build_switch"
 
 if not exist "%WB_SWITCH_BUILD%\CMakeCache.txt" (
   echo Not configured yet - run configure_switch.bat

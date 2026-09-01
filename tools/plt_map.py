@@ -2,9 +2,14 @@
 #
 # Static reading of the engine keeps running into "bl #0x55b2c" - a call into
 # the PLT, which says nothing on its own. .rel.plt names every one of them.
+import os
 import struct, sys
 
-PATH = r"H:\dwnld\Mount & Blade - Warband\apk_lib\libMBExpMobile.so"
+# The engine, where setup.bat puts it. Override with WB_SO.
+PATH = os.environ.get(
+    "WB_SO",
+    os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                 os.pardir, "game", "libMBExpMobile.so"))
 
 
 def sections(data):

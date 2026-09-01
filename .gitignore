@@ -1,6 +1,9 @@
-# Nothing from the game, ever. The shader dumps below are the engine's own
-# source, written into the working directory on every run so a compile failure
-# can be read; they are diagnostics, not ours to publish.
+# Nothing from the game, ever. The engine binary and its data live under
+# game/, put there by setup.bat out of a copy you own; the shader dumps are
+# the engine's own source, written into the working directory on every run so
+# that a compile failure can be read.
+game/
+sdcard/
 shader_*_raw.glsl
 *.dds
 *.brf
@@ -8,17 +11,19 @@ shader_*_raw.glsl
 *.apk
 *.so
 
-# Frame grabs and recordings, written beside the executable.
+# Fetched by setup.bat, not ours to carry.
+external/
+
+# Build trees.
+build/
+build_switch/
+build_asan/
+out/
+
+# Frame grabs, recordings and logs, written beside the executable.
 *.bmp
 *.wav
 *.log
-
-# Build trees, if anyone points one at the source directory.
-build/
-out/
-*.ninja
-CMakeCache.txt
-CMakeFiles/
 
 __pycache__/
 *.pyc

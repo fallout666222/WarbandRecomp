@@ -5,10 +5,15 @@
 # runs. Import calls are resolved through the trampoline table, so a call to
 # an unresolved import shows up as a branch into the PLT - printed by name
 # where the dynamic symbol table can name it.
+import os
 import sys, struct
 from capstone import *
 
-PATH = r"H:\dwnld\Mount & Blade - Warband\apk_lib\libMBExpMobile.so"
+# The engine, where setup.bat puts it. Override with WB_SO.
+PATH = os.environ.get(
+    "WB_SO",
+    os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                 os.pardir, "game", "libMBExpMobile.so"))
 
 
 def read_elf(path):

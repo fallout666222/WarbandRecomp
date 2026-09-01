@@ -7,9 +7,14 @@
 # use, and the symbol table turns the answer into a name.
 #
 #   python find_ref.py gamepadAxisIndices
+import os
 import sys, struct, bisect
 
-PATH = r"H:\dwnld\Mount & Blade - Warband\apk_lib\libMBExpMobile.so"
+# The engine, where setup.bat puts it. Override with WB_SO.
+PATH = os.environ.get(
+    "WB_SO",
+    os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                 os.pardir, "game", "libMBExpMobile.so"))
 
 
 def sections(data):
