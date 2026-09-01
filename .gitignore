@@ -1,0 +1,24 @@
+# Nothing from the game, ever. The shader dumps below are the engine's own
+# source, written into the working directory on every run so a compile failure
+# can be read; they are diagnostics, not ours to publish.
+shader_*_raw.glsl
+*.dds
+*.brf
+*.obb
+*.apk
+*.so
+
+# Frame grabs and recordings, written beside the executable.
+*.bmp
+*.wav
+*.log
+
+# Build trees, if anyone points one at the source directory.
+build/
+out/
+*.ninja
+CMakeCache.txt
+CMakeFiles/
+
+__pycache__/
+*.pyc

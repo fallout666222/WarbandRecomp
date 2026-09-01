@@ -1,0 +1,53 @@
+  emit("fabsf", {
+      0xE3C00102,   // bic   r0, r0, #0x80000000  bic r0, r0, #0x80000000
+      0xE12FFF1E,   // bx    lr                   bx lr
+  });
+
+  emit("sqrtf", {
+      0xEE000A10,   // vmov  s0, r0               vmov s0, r0
+      0xEEF10AC0,   // vsqrt.f32 s1, s0           vsqrt.f32 s1, s0
+      0xEE100A90,   // vmov  r0, s1               vmov r0, s1
+      0xE12FFF1E,   // bx    lr                   bx lr
+  });
+
+  emit("truncf", {
+      0xE3C01102,   // bic   r1, r0, #0x80000000  bic r1, r0, #0x80000000
+      0xE351044B,   // cmp   r1, #0x4B000000      cmp r1, #0x4b000000
+      0xA12FFF1E,   // bxge  lr                   bxge lr
+      0xEE000A10,   // vmov  s0, r0               vmov s0, r0
+      0xEEFD0AC0,   // vcvt.s32.f32 s1, s0        vcvt.s32.f32 s1, s0
+      0xEEB81AE0,   // vcvt.f32.s32 s2, s1        vcvt.f32.s32 s2, s1
+      0xEE110A10,   // vmov  r0, s2               vmov r0, s2
+      0xE12FFF1E,   // bx    lr                   bx lr
+  });
+
+  emit("floorf", {
+      0xE3C01102,   // bic   r1, r0, #0x80000000  bic r1, r0, #0x80000000
+      0xE351044B,   // cmp   r1, #0x4B000000      cmp r1, #0x4b000000
+      0xA12FFF1E,   // bxge  lr                   bxge lr
+      0xEE000A10,   // vmov  s0, r0               vmov s0, r0
+      0xEEFD0AC0,   // vcvt.s32.f32 s1, s0        vcvt.s32.f32 s1, s0
+      0xEEB81AE0,   // vcvt.f32.s32 s2, s1        vcvt.f32.s32 s2, s1
+      0xEEF71A00,   // vmov.f32 s3, #1.0          vmov.f32 s3, #1.000000e+00
+      0xEEB40A41,   // vcmp.f32 s0, s2            vcmp.f32 s0, s2
+      0xEEF1FA10,   // vmrs  APSR_nzcv, fpscr     vmrs apsr_nzcv, fpscr
+      0xBE311A61,   // vsublt.f32 s2, s2, s3      vsublt.f32 s2, s2, s3
+      0xEE110A10,   // vmov  r0, s2               vmov r0, s2
+      0xE12FFF1E,   // bx    lr                   bx lr
+  });
+
+  emit("ceilf", {
+      0xE3C01102,   // bic   r1, r0, #0x80000000  bic r1, r0, #0x80000000
+      0xE351044B,   // cmp   r1, #0x4B000000      cmp r1, #0x4b000000
+      0xA12FFF1E,   // bxge  lr                   bxge lr
+      0xEE000A10,   // vmov  s0, r0               vmov s0, r0
+      0xEEFD0AC0,   // vcvt.s32.f32 s1, s0        vcvt.s32.f32 s1, s0
+      0xEEB81AE0,   // vcvt.f32.s32 s2, s1        vcvt.f32.s32 s2, s1
+      0xEEF71A00,   // vmov.f32 s3, #1.0          vmov.f32 s3, #1.000000e+00
+      0xEEB40A41,   // vcmp.f32 s0, s2            vcmp.f32 s0, s2
+      0xEEF1FA10,   // vmrs  APSR_nzcv, fpscr     vmrs apsr_nzcv, fpscr
+      0xCE311A21,   // vaddgt.f32 s2, s2, s3      vaddgt.f32 s2, s2, s3
+      0xEE110A10,   // vmov  r0, s2               vmov r0, s2
+      0xE12FFF1E,   // bx    lr                   bx lr
+  });
+

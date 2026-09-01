@@ -1,0 +1,28 @@
+# Switches for warband_nx, read at startup from
+# sdmc:/switch/warband/args.txt
+#
+# hbmenu launches an .nro with no arguments, and every diagnostic in this
+# build is a command-line switch - so this file is the only way to turn one on
+# without rebuilding. One per line or all on one line; blank lines and
+# anything after a # are ignored. Everything here is commented out, so as it
+# stands this file changes nothing.
+#
+# --seconds=N          stop after N seconds (default: run until closed)
+# --svcs=N             stop after N import calls; 0 is no cap, and 0 is the
+#                      default on this platform. A small number is how you
+#                      bisect a hang: run to N, read the histogram.
+# --ticks=N            guest instructions per Run() before coming back
+# --threads=N          cap on guest threads
+# --shot=PATH          write PATH_01.bmp, PATH_02.bmp ... from the back buffer,
+#                      e.g. --shot=sdmc:/switch/warband/shot
+# --shot-every=N       seconds between those grabs
+# --gl-errors          ask the driver after every GL call whether it objected
+# --gl-trace           name every GL call before it is made (very slow)
+# --log-calls=SEC      name every import the engine makes, from SEC onwards
+# --trace              sample the guest pc and symbolise it
+# --trace-from=SEC     start sampling that many seconds in
+# --no-draw            keep every GL call except the draws
+# --no-overlay         no frame counter
+# --rec=PATH.wav       write everything the mixer produced
+# --check-verts        describe the box each draw's positions cover
+# --no-draw-guard      leave out-of-range vertex arrays enabled
