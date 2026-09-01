@@ -313,6 +313,11 @@ u32 input_take_next() {
   return token;
 }
 
+bool input_next_is_key() {
+  std::lock_guard<std::mutex> lock(g_lock);
+  return !g_queue.empty() && g_queue.front().kind == InputEvent::Kind::Key;
+}
+
 u32 input_current_unicode() {
   std::lock_guard<std::mutex> lock(g_lock);
   return g_current_unicode;

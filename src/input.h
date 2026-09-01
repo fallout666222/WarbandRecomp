@@ -96,6 +96,11 @@ bool input_pending();
 // AndroidGlue, which hands the token to the engine's own input handler.
 u32 input_take_next();
 
+// True when the next event waiting is a key rather than a touch or a stick.
+// The delivery path paces keys and does not pace anything else - see
+// AndroidGlue::pump_input.
+bool input_next_is_key();
+
 // The character carried by the event currently being dispatched. The engine
 // asks for it through JNI rather than through the NDK, and JNI has no way to
 // know which event it is being asked about - the call carries no reference to

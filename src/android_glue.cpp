@@ -18,6 +18,8 @@
 #include <cstdio>
 #include <cstring>
 
+#include <chrono>
+
 #include "android_glue.h"
 
 #include "input.h"
@@ -185,13 +187,41 @@ void AndroidGlue::pump_input() {
                 env_.loader().symbolize(handler).c_str());
   }
   if (!handler) return;
+
+  // Keys go one at a time, twenty milliseconds apart; everything else goes as
+  // fast as it arrives.
+  //
+  // The engine does not drain an input queue - it keeps the key it last saw
+  // and reads that once a frame - so a burst of events inside one frame is a
+  // burst it sees one of. A person typing never produces that, and neither
+  // does an Android IME, which delivers each character as it is entered. The
+  // Switch's software keyboard does: it returns the whole string at once, and
+  // replaying it as fast as the loop can push meant a name came out one
+  // letter long.
+  //
+  // Twenty milliseconds is longer than a frame at sixty, so every key is on
+  // screen for at least one, and a name of twenty characters takes under half
+  // a second to arrive.
+  using clock = std::chrono::steady_clock;
+  static clock::time_point last_key;
+  constexpr auto kKeyGap = std::chrono::milliseconds(20);
+
   for (int guard = 0; guard < 64; ++guard) {
+    const bool is_key = input_next_is_key();
+    if (is_key && clock::now() - last_key < kKeyGap) return;
     const u32 event = input_take_next();
     if (!event) return;
+    if (is_key) last_key = clock::now();
     const u32 handled = env_.call(handler, {app_, event});
     static int shown = 0;
-    if (++shown <= 8)
-      std::printf("[inp ] delivered event 0x%08X -> %u\n", event, handled);
+    if (++shown <= 40) {
+      // With a timestamp: the whole question about text entry is whether the
+      // characters arrive spread out or all inside one frame.
+      const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+          clock::now().time_since_epoch()).count() % 100000;
+      std::printf("[inp ] t=%lld delivered event 0x%08X -> %u\n",
+                  (long long)ms, event, handled);
+    }
   }
 }
 

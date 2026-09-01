@@ -153,6 +153,11 @@ struct Options {
   // be tested by clicking - so it gets the same treatment as the finger.
   struct Press { int code; int at; };
   std::vector<Press> presses;
+  // A whole string, delivered the way the Switch's software keyboard delivers
+  // one: all at once. That burst is the thing worth being able to reproduce -
+  // it is what made a typed name come out one letter long.
+  std::string typed;
+  int typed_at = 0;
 };
 
 Options parse(int argc, char** argv) {
@@ -185,6 +190,14 @@ Options parse(int argc, char** argv) {
       o.shot_every = std::atoi(a.c_str() + 13);
     } else if (a.rfind("--calls=", 0) == 0) {
       o.calls = std::atoi(a.c_str() + 8);
+    } else if (a.rfind("--type=", 0) == 0) {
+      const std::size_t at = a.rfind('@');
+      if (at != std::string::npos && at > 7) {
+        o.typed = a.substr(7, at - 7);
+        o.typed_at = std::atoi(a.c_str() + at + 1);
+      } else {
+        std::printf("[opt ] cannot read text from %s\n", a.c_str());
+      }
     } else if (a.rfind("--press=", 0) == 0) {
       int code = 0, at = 0;
       if (std::sscanf(a.c_str() + 8, "%d@%d", &code, &at) == 2)
@@ -472,6 +485,7 @@ int run(const Options& opt) {
   struct ReleasePress { int code; int tick; };
   std::vector<ReleasePress> release_press;
   std::vector<bool> pressed(opt.presses.size(), false);
+  bool text_sent = false;
   // Counted in ticks this loop would be counting its own sleeps, and the
   // work between them is not free - a hundred and twenty seconds of ticks
   // took five minutes. The deadline is wall time.
@@ -497,6 +511,28 @@ int run(const Options& opt) {
       logging_calls = true;
       std::printf("[run ] logging every import call from here\n");
       env.set_call_log(true, 0);
+    }
+    if (!opt.typed.empty() && !text_sent && now >= opt.typed_at) {
+      text_sent = true;
+      std::printf("[run ] typing \"%s\" the way a software keyboard would - "
+                  "every character at once\n", opt.typed.c_str());
+      for (char c : opt.typed) {
+        wb::InputEvent ev;
+        ev.kind = wb::InputEvent::Kind::Key;
+        ev.source = wb::Source::Keyboard;
+        // Android's keycodes for the characters a name can contain; anything
+        // else goes as a character with no key, which is what an IME does for
+        // symbols it has no key for.
+        if (c >= 'a' && c <= 'z') ev.key_code = 29 + (c - 'a');
+        else if (c >= 'A' && c <= 'Z') ev.key_code = 29 + (c - 'A');
+        else if (c >= '0' && c <= '9') ev.key_code = 7 + (c - '0');
+        else if (c == ' ') ev.key_code = 62;
+        ev.unicode = static_cast<wb::u32>(static_cast<unsigned char>(c));
+        ev.action = 0;
+        wb::input_push(ev);
+        ev.action = 1;
+        wb::input_push(ev);
+      }
     }
     for (std::size_t b = 0; b < opt.presses.size(); ++b) {
       if (pressed[b] || now < opt.presses[b].at) continue;
