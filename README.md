@@ -18,14 +18,6 @@ runs and shows nothing.
 
 ## What works
 
-On the Switch: the game boots, the main menu draws, and the sound plays. The
-recompiler runs the engine's own code, GL goes through switch-mesa's nouveau
-driver, audio through `audout`, and the Joy-Cons arrive as the SHIELD
-controller the engine was written for.
-
-On Windows the same source builds against WGL and waveOut, which is where
-almost all of the work happened: the main menu at 60 fps, character creation,
-and the tutorial ground — trees, terrain, the player, the HUD.
 
 Loading is slow, and honestly so: every one of the engine's instructions is
 translated the first time it runs, and a Tegra X1 is not a fast machine to do
@@ -47,7 +39,7 @@ it cost, and why each piece is the shape it is.
   ```
 
 - **git** and **Python 3** on `PATH`.
-- **Your copy of the game**: the Android APK and its two `.obb` files. The APK
+- **Your copy of the game**: the Android Nvidia Shield APK and its two `.obb` files. The APK
   carries the engine; the OBBs carry the data. Nothing here downloads either.
 
 ## Setup
@@ -170,16 +162,7 @@ Started the wrong way, this build does not crash: it writes what is wrong to
 `warband.log` and puts it on the screen in words, with the memory it was given
 and the memory it needs side by side.
 
-If your console genuinely cannot spare 2 GiB, build a smaller guest:
 
-```bat
-cmake -B build_switch -DWB_GUEST_MB=768
-```
-
-That fits far more easily and is enough for the menu and a small scene, but
-the campaign map allocates around 450 MB on its own and will run out.
-
-Two things about the Switch build are worth knowing before they surprise you.
 
 **It must be devkitPro's own CMake, run from devkitPro's own shell.** Its
 toolchain file refuses to run under any other CMake, and that CMake is an
