@@ -215,33 +215,56 @@ void switch_fatal(const char* fmt, ...) {
 }
 
 const char* switch_launch_problem() {
-  // Applet mode is the usual reason a homebrew port shows an error code and
-  // nothing else: launched from the album, a process gets a few hundred
-  // megabytes and none of the kernel calls a recompiler needs. Title takeover
-  // - holding R on a game in hbmenu - gets both.
-  const AppletType type = appletGetAppletType();
-  const bool takeover = type == AppletType_Application ||
-                        type == AppletType_SystemApplication;
-  if (!takeover)
-    return "This build was launched in applet mode, which gives a process a\n"
-           "few hundred megabytes and no permission to generate code.\n"
-           "Hold R while starting any game in hbmenu to launch it as that\n"
-           "game instead - that is what \"title takeover\" means - and run\n"
-           "Warband from the menu that appears.";
+  static char msg[640];
 
-  // The recompiler writes machine code and then runs it. Horizon only allows
-  // that through these calls, and only for a process the loader has marked as
-  // allowed to. Without them there is no way to run the game at all.
-  if (!envIsSyscallHinted(0x73))
-    return "svcSetProcessMemoryPermission is not available to this process,\n"
-           "so generated code can never be made executable. Update\n"
-           "Atmosphere and hbloader, and launch with title takeover.";
-  if (!envIsSyscallHinted(0x77) || !envIsSyscallHinted(0x78))
-    return "svcMapProcessCodeMemory is not available to this process.\n"
-           "Update Atmosphere and hbloader, and launch with title takeover.";
-  if (envGetOwnProcessHandle() == INVALID_HANDLE)
-    return "This process has no handle to itself, so it cannot map code.\n"
-           "Launch with title takeover from hbmenu.";
+  // Ask the machine, do not deduce from how it was started.
+  //
+  // The first version of this checked the applet type, three syscall hints
+  // and the process handle. Every one of those is a proxy, and proxies are
+  // wrong in both directions: an emulator ran the game happily with no
+  // process handle at all - libnx had chosen the code-memory mechanism, which
+  // does not need one - while the check refused to start. What the port
+  // actually requires is two things, and both can simply be tried.
+
+  // One: memory that can be written and then executed. jitCreate picks its
+  // own mechanism, so this tests whichever one this machine will really use.
+  Jit probe = {};
+  const Result rc = jitCreate(&probe, 0x1000);
+  if (R_FAILED(rc)) {
+    std::snprintf(msg, sizeof(msg),
+                  "This process may not generate code: jitCreate failed with\n"
+                  "2%03d-%04d.\n\n"
+                  "Launched from the album, homebrew gets neither memory nor\n"
+                  "permission to compile. Hold R while starting any game in\n"
+                  "hbmenu - that is \"title takeover\" - and run Warband from\n"
+                  "the menu that appears.",
+                  R_MODULE(rc), R_DESCRIPTION(rc));
+    return msg;
+  }
+  jitClose(&probe);
+
+  // Two: room for the guest. The engine's whole address space is one
+  // allocation, and the host needs its own on top - the recompiler's caches,
+  // the graphics driver, the decoded textures. Refusing here with the two
+  // numbers side by side is worth more than a std::bad_alloc later.
+  const std::size_t heap =
+      static_cast<std::size_t>(fake_heap_end - fake_heap_start);
+  constexpr std::size_t kHostNeeds = 192u << 20;
+  const std::size_t need = layout::kSpaceSize + kHostNeeds;
+  if (heap < need) {
+    std::snprintf(msg, sizeof(msg),
+                  "Not enough memory: this process was given %llu MiB, and the\n"
+                  "guest address space alone is %u MiB.\n\n"
+                  "Applet type is %d; an application is 0. Launched from the\n"
+                  "album a process is capped at a few hundred megabytes, so\n"
+                  "hold R while starting any game in hbmenu - that is \"title\n"
+                  "takeover\" - and run Warband from the menu that appears.\n\n"
+                  "If it was launched that way already, this build wants more\n"
+                  "than the console has: rebuild with a smaller -DWB_GUEST_MB.",
+                  (unsigned long long)(heap >> 20), layout::kSpaceSize >> 20,
+                  (int)appletGetAppletType());
+    return msg;
+  }
   return nullptr;
 }
 
