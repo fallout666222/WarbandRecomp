@@ -22,6 +22,9 @@
 # --trace              sample the guest pc and symbolise it
 # --trace-from=SEC     start sampling that many seconds in
 # --no-draw            keep every GL call except the draws
+# --overlay            frame counter on. Off here by default: its shader
+#                      has no precision qualifier and GLES will not
+#                      compile it, so it draws nothing and complains.
 # --no-overlay         no frame counter
 # --rec=PATH.wav       write everything the mixer produced
 # --check-verts        describe the box each draw's positions cover

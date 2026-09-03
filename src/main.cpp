@@ -130,7 +130,18 @@ struct Options {
   // Leave the floating-point unit in strict IEEE mode instead of the
   // flush-to-zero the device uses. Only for telling the two apart.
   bool ieee_floats = false;
-  bool overlay = true;                 // draw the frame counter
+  // The frame counter, off on the console.
+  //
+  // Its fragment shader has no precision qualifier, which desktop GL accepts
+  // and GLES rejects outright - so on the Switch it compiles to nothing and
+  // the log fills with the failure. Rather than carry a second shader for one
+  // number, it is simply off there; --overlay turns it back on for anyone who
+  // wants to fix it.
+#if defined(WB_SWITCH)
+  bool overlay = false;
+#else
+  bool overlay = true;
+#endif
   bool drawing = true;                 // issue draw calls at all
   bool draw_sync = false;              // wait for the GPU after every draw
   bool profile = false;                // time every draw, bill it per program
@@ -232,6 +243,8 @@ Options parse(int argc, char** argv) {
       o.gl_trace = true;
     } else if (a == "--no-overlay") {
       o.overlay = false;
+    } else if (a == "--overlay") {
+      o.overlay = true;
     } else if (a == "--ieee") {
       o.ieee_floats = true;
     } else if (a == "--gl-errors") {
