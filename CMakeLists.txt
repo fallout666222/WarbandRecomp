@@ -164,13 +164,42 @@ if(WB_SWITCH)
 
   # And the thing that actually goes on the SD card. The ELF keeps its debug
   # info - it is what symbolises a crash dump - and the .nro does not.
+  #
+  # What the home menu shows. The author line names both: TaleWorlds wrote the
+  # game, and this port is not theirs - saying only one of those would be
+  # wrong in one direction or the other. Set -DWB_APP_AUTHOR="..." to sign it
+  # yourself.
+  #
+  # The version is the engine's own, the one the main menu prints, plus where
+  # this port has got to. nacptool truncates at fifteen characters.
+  set(WB_APP_NAME "Mount & Blade: Warband" CACHE STRING
+      "Title shown on the home menu")
+  set(WB_APP_AUTHOR "TaleWorlds - NX port" CACHE STRING
+      "Author shown on the home menu")
+  set(WB_APP_VERSION "1.158 port 0.2" CACHE STRING
+      "Version shown on the home menu")
+  # 256x256 JPEG, built from the game's own menu artwork by tools/make_icon.py.
+  # Falls back to libnx's default so a fresh checkout still builds.
+  set(WB_APP_ICON "${CMAKE_CURRENT_SOURCE_DIR}/switch/icon.jpg")
+  if(NOT EXISTS "${WB_APP_ICON}")
+    message(WARNING "no switch/icon.jpg - run tools/make_icon.py for the "
+                    "game's own icon; using libnx's default for now")
+    unset(WB_APP_ICON)
+  endif()
+
   nx_generate_nacp(
     OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/warband_nx.nacp"
-    NAME "Mount & Blade: Warband"
-    AUTHOR "warband_nx"
-    VERSION "0.1.0")
-  nx_create_nro(warband_nx
-    NACP "${CMAKE_CURRENT_BINARY_DIR}/warband_nx.nacp")
+    NAME "${WB_APP_NAME}"
+    AUTHOR "${WB_APP_AUTHOR}"
+    VERSION "${WB_APP_VERSION}")
+  if(WB_APP_ICON)
+    nx_create_nro(warband_nx
+      NACP "${CMAKE_CURRENT_BINARY_DIR}/warband_nx.nacp"
+      ICON "${WB_APP_ICON}")
+  else()
+    nx_create_nro(warband_nx
+      NACP "${CMAKE_CURRENT_BINARY_DIR}/warband_nx.nacp")
+  endif()
 endif()
 
 if(MSVC)

@@ -10,6 +10,17 @@ shader_*_raw.glsl
 *.obb
 *.apk
 *.so
+# The home-menu icon is a crop of the game's own title artwork, so it is game
+# content like everything above. tools/make_icon.py rebuilds it from the copy
+# under game/; without it the build falls back to libnx's default icon.
+switch/icon.jpg
+
+# Console keys are nobody's to publish, and nothing here needs them. This is
+# only a guard against a stray copy in the working directory.
+*.keys
+keys.txt
+prod.keys
+title.keys
 
 # Fetched by setup.bat, not ours to carry.
 external/

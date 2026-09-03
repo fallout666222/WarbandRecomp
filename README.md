@@ -110,6 +110,21 @@ stage_sd.bat
 data and an `args.txt`. Copy the `switch` folder inside it to the root of your
 SD card.
 
+The home-menu icon is the game's own title artwork, so it is not in this
+repository either. `tools/make_icon.py` cuts it out of your copy:
+
+```bat
+python tools\make_icon.py
+```
+
+That writes `switch\icon.jpg`, and the next configure picks it up. Skip it and
+the build says so and uses libnx's default icon instead. Three cache variables
+set the rest of what the home menu shows:
+
+```bat
+cmake -B build_switch -DWB_APP_NAME="..." -DWB_APP_AUTHOR="..." -DWB_APP_VERSION="..."
+```
+
 **Launch it with title takeover** — in hbmenu, hold **R** while opening a game,
 then start warband_nx from the album. Not from the album applet on its own:
 applet mode caps a process at about 448 MiB and the guest address space alone
@@ -189,3 +204,4 @@ here is the layer underneath it.
 
 dynarmic is 0BSD. `stb_vorbis` is public domain. The oaknut header under
 `switch/` is a modified copy of oaknut's own, MIT, and says so at the top.
+Everything else here is MIT, in `LICENSE`.
