@@ -106,9 +106,32 @@ build_switch.bat
 stage_sd.bat
 ```
 
-`stage_sd.bat` assembles `sdcard\switch\warband\` — the `.nro`, the engine, the
-data and an `args.txt`. Copy the `switch` folder inside it to the root of your
-SD card.
+`stage_sd.bat` assembles the card layout under `sdcard\`. Copy the `switch`
+folder inside it to the **root** of your SD card, so that it ends up looking
+like this:
+
+```
+sd:/
+  switch/
+    warband/
+      warband_nx.nro          the port
+      libMBExpMobile.so       the engine, out of your APK
+      args.txt                startup options, one per line
+      warband.log             written by the game, read when it goes wrong
+      gamedata/               the OBBs unpacked, about 795 MB
+        Data/
+        Modules/
+        Sounds/
+        Textures/
+        CommonRes/
+        languages/
+        music/
+      user/                   saves and settings, created on first run
+```
+
+The paths are fixed: the port looks for `sdmc:/switch/warband/` and nothing
+else. `warband_nx.nro` may be moved elsewhere — hbmenu will still find it —
+but the engine and the data must stay where they are.
 
 The home-menu icon is the game's own title artwork, so it is not in this
 repository either. `tools/make_icon.py` cuts it out of your copy:
@@ -125,10 +148,36 @@ set the rest of what the home menu shows:
 cmake -B build_switch -DWB_APP_NAME="..." -DWB_APP_AUTHOR="..." -DWB_APP_VERSION="..."
 ```
 
-**Launch it with title takeover** — in hbmenu, hold **R** while opening a game,
-then start warband_nx from the album. Not from the album applet on its own:
-applet mode caps a process at about 448 MiB and the guest address space alone
-is 2 GiB. Started the wrong way it says so in the log and stops.
+### It has to be launched with title takeover
+
+This is not a preference, and it is the single most common way to get nothing
+but an error code. Homebrew started from the album runs as an *applet*, and an
+applet is capped at a few hundred megabytes and is not allowed to generate
+code. This port needs both: the guest address space alone is 2 GiB, and every
+instruction of the engine is compiled as it runs.
+
+Title takeover means the homebrew replaces a game and inherits its share of
+the console, which is about 3.2 GiB. To do it:
+
+1. Hold **R** and, keeping it held, start any installed game from the Switch
+   home menu.
+2. hbmenu opens instead of the game.
+3. Start Warband from there.
+
+Holding R on the album icon is *not* the same thing — that is applet mode.
+
+Started the wrong way, this build does not crash: it writes what is wrong to
+`warband.log` and puts it on the screen in words, with the memory it was given
+and the memory it needs side by side.
+
+If your console genuinely cannot spare 2 GiB, build a smaller guest:
+
+```bat
+cmake -B build_switch -DWB_GUEST_MB=768
+```
+
+That fits far more easily and is enough for the menu and a small scene, but
+the campaign map allocates around 450 MB on its own and will run out.
 
 Two things about the Switch build are worth knowing before they surprise you.
 
